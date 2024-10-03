@@ -1095,10 +1095,16 @@ static int imx8mp_eqos_interface_init(struct udevice *dev,
 			     IOMUXC_GPR_GPR1_GPR_ENET_QOS_INTF_SEL_MII);
 		break;
 	case PHY_INTERFACE_MODE_RMII:
-		setbits_le32(&gpr->gpr[1],
-			     IOMUXC_GPR_GPR1_GPR_ENET_QOS_CLK_TX_CLK_SEL |
-			     IOMUXC_GPR_GPR1_GPR_ENET_QOS_CLK_GEN_EN |
-			     IOMUXC_GPR_GPR1_GPR_ENET_QOS_INTF_SEL_RMII);
+		if (of_machine_is_compatible("engi,imx8mp-icore-fasteth")) {
+			setbits_le32(&gpr->gpr[1],
+				     IOMUXC_GPR_GPR1_GPR_ENET_QOS_CLK_GEN_EN |
+				     IOMUXC_GPR_GPR1_GPR_ENET_QOS_INTF_SEL_RMII);
+		} else {
+			setbits_le32(&gpr->gpr[1],
+				     IOMUXC_GPR_GPR1_GPR_ENET_QOS_CLK_TX_CLK_SEL |
+				     IOMUXC_GPR_GPR1_GPR_ENET_QOS_CLK_GEN_EN |
+				     IOMUXC_GPR_GPR1_GPR_ENET_QOS_INTF_SEL_RMII);
+		}
 		break;
 	case PHY_INTERFACE_MODE_RGMII:
 	case PHY_INTERFACE_MODE_RGMII_ID:
