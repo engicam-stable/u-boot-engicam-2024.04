@@ -1489,9 +1489,6 @@ static int ci_udc_otg_probe(struct udevice *dev)
 
 	ehci_mx6_phy_init(ehci, &priv->phy_data, dev_seq(dev));
 
-	if (ci_udc_otg_phy_mode(dev) != USB_INIT_DEVICE)
-		return -ENODEV;
-
 	priv->ctrl.hccr = (struct ehci_hccr *)((ulong)&ehci->caplength);
 	priv->ctrl.hcor = (struct ehci_hcor *)((ulong)priv->ctrl.hccr +
 			HC_LENGTH(ehci_readl(&(priv->ctrl.hccr)->cr_capbase)));
