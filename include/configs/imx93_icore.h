@@ -69,7 +69,7 @@
 	"bootm_size=0x10000000\0" \
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=1\0" \
-	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
+	"mmcroot=/dev/mmcblk1p2 rootwait rw\0" \
 	"mmcautodetect=yes\0" \
 	"mmcargs=setenv bootargs ${jh_clk} console=${console} root=${mmcroot}\0 " \
 	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
@@ -152,35 +152,24 @@
 #define CFG_SYS_INIT_RAM_ADDR        0x80000000
 #define CFG_SYS_INIT_RAM_SIZE        0x200000
 
-#define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
-
 #define CFG_SYS_SDRAM_BASE           0x80000000
 #define PHYS_SDRAM                      0x80000000
-#define PHYS_SDRAM_SIZE			0x80000000 /* 2GB DDR */
-
-/* Monitor Command Prompt */
-#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
+#ifdef CONFIG_IMX9_LPDDR4X_1GB
+	#define PHYS_SDRAM_SIZE			0x40000000 /* 1GB DDR */
+#else
+	#define PHYS_SDRAM_SIZE			0x80000000 /* 2GB DDR */
+#endif
 
 #define CFG_SYS_FSL_USDHC_NUM	2
 
 /* Using ULP WDOG for reset */
 #define WDOG_BASE_ADDR          WDG3_BASE_ADDR
 
-#define CONFIG_SYS_I2C_SPEED		100000
-
 /* USB configs */
 #define CONFIG_USB_MAX_CONTROLLER_COUNT         2
 
 #if defined(CONFIG_CMD_NET)
-#define CONFIG_ETHPRIME                 "eth1"
-
-#define CONFIG_FEC_XCV_TYPE             RGMII
-#define CONFIG_FEC_MXC_PHYADDR          7
-
-#define DWC_NET_PHYADDR			7
-
 #define PHY_ANEG_TIMEOUT 20000
-
 #endif
 
 #endif
