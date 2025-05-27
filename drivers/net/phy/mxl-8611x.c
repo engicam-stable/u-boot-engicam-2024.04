@@ -27,6 +27,12 @@
 #define MXL8611X_EXT_RGMII_CFG1_TX_1G_DELAY_MASK		GENMASK(3, 0)
 #define MXL8611X_EXT_RGMII_CFG1_TX_10MB_100MB_DELAY_MASK	GENMASK(7, 4)
 
+/* RGMII In-Band Status and MDIO Configuration Register */
+#define MXL8611X_EXT_RGMII_MDIO_CFG				0xA005
+#define MXL8611X_EXT_RGMII_MDIO_CFG_EPA0_MASK			GENMASK(6, 6)
+#define MXL8611X_EXT_RGMII_MDIO_CFG_EBA_MASK			GENMASK(5, 5)
+#define MXL8611X_EXT_RGMII_MDIO_CFG_BA_MASK			GENMASK(4, 0)
+
 /* LED registers and defines */
 #define MXL8611X_LED0_CFG_REG					0xA00C
 #define MXL8611X_LED1_CFG_REG					0xA00D
@@ -234,16 +240,77 @@ static int mxl8611x_config(struct phy_device *phydev)
 	return genphy_config(phydev);
 }
 
+/**
+* mxl8611x_broadcast_cfg() - applies broadcast configuration
+* @phydev: pointer to the phy_device
+*
+* Configures the broadcast setting for the PHY based on the device tree.
+* If the "mxl-8611x,broadcast-enabled" property is present, the PHY broadcasts
+* address 0 on the MDIO bus. This feature enables the PHY to always respond to MDIO access.
+* Returns 0 or a negative errno code.
+*/
+static int mxl8611x_broadcast_cfg(struct phy_device *phydev)
+{
+	int ret = 0;
+	ofnode node;
+	u32 val;
+
+	if (!phydev) {
+		printf("%s: Invalid phy_device pointer\n", __func__);
+		return -EINVAL;
+	}
+
+	node = phy_get_ofnode(phydev);
+	if (!ofnode_valid(node)) {
+		printf("%s: Invalid device tree node\n", __func__);
+		return -EINVAL;
+	}
+
+	val = mxl8611x_ext_read(phydev, MXL8611X_EXT_RGMII_MDIO_CFG);
+
+	if (ofnode_read_bool(node, "mxl-8611x,broadcast-enabled"))
+		val |= MXL8611X_EXT_RGMII_MDIO_CFG_EPA0_MASK;
+	else
+		val &= ~MXL8611X_EXT_RGMII_MDIO_CFG_EPA0_MASK;
+
+	ret = mxl8611x_ext_write(phydev, MXL8611X_EXT_RGMII_MDIO_CFG, val);
+	if (ret) {
+		printf("%s: Failed to write 0x%x to RGMII MDIO CFG register (0x%x): ret = %d\n",
+			__func__, val, MXL8611X_EXT_RGMII_MDIO_CFG, ret);
+		return ret;
+	}
+
+	return 0;
+}
+
 static int mxl86110_config(struct phy_device *phydev)
 {
 	printf("MXL86110 PHY detected at addr %d\n", phydev->addr);
-	return mxl8611x_config(phydev);
+
+	int ret = mxl8611x_config(phydev);
+	if (ret < 0)
+		return ret;
+
+	ret = mxl8611x_broadcast_cfg(phydev);
+	if (ret < 0)
+		return ret;
+
+	return 0;
 }
 
 static int mxl86111_config(struct phy_device *phydev)
 {
 	printf("MXL86111 PHY detected at addr %d\n", phydev->addr);
-	return mxl8611x_config(phydev);
+
+	int ret = mxl8611x_config(phydev);
+	if (ret < 0)
+		return ret;
+
+	ret = mxl8611x_broadcast_cfg(phydev);
+	if (ret < 0)
+		return ret;
+
+	return 0;
 }
 
 U_BOOT_PHY_DRIVER(MXL86110) = {
