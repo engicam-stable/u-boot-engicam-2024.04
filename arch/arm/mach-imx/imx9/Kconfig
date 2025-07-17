@@ -79,6 +79,10 @@ config TARGET_IMX93_9X9_QSB
 	select IMX93
 	select IMX9_LPDDR4X
 
+config TARGET_IMX95_ICORE
+	bool "imx95 icore Engicam Module"
+	select IMX95
+
 config TARGET_IMX95_SMARCORE
 	bool "imx95 Smarcore Engicam Module"
 	select IMX95
@@ -98,6 +102,7 @@ config TARGET_IMX95_15X15_EVK
 endchoice
 
 source "board/engicam/imx93_icore/Kconfig"
+source "board/engicam/imx95_icore/Kconfig"
 source "board/engicam/imx95_smarcore/Kconfig"
 source "board/freescale/imx91_evk/Kconfig"
 source "board/freescale/imx91_qsb/Kconfig"
