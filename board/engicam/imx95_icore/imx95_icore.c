@@ -71,11 +71,7 @@ int board_early_init_f(void)
 #define PHY_CTRL6_ALT_CLK_SEL		BIT(0)
 
 static struct dwc3_device dwc3_device_data = {
-#ifdef CONFIG_SPL_BUILD
 	.maximum_speed = USB_SPEED_HIGH,
-#else
-	.maximum_speed = USB_SPEED_SUPER,
-#endif
 	.base = USB1_BASE_ADDR,
 	.dr_mode = USB_DR_MODE_PERIPHERAL,
 	.index = 0,
@@ -142,13 +138,9 @@ int board_usb_init(int index, enum usb_init_type init)
 
 #ifdef CONFIG_USB_DWC3
 		dwc3_nxp_usb_phy_init(&dwc3_device_data);
-#endif
-
-#ifdef CONFIG_USB_DWC3
 		return dwc3_uboot_init(&dwc3_device_data);
 #endif
 	} else if (index == 0 && init == USB_INIT_HOST) {
-
 		return ret;
 	}
 
@@ -161,10 +153,6 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 	if (index == 0 && init == USB_INIT_DEVICE) {
 #ifdef CONFIG_USB_DWC3
 		dwc3_uboot_exit(index);
-#endif
-	} else if (index == 0 && init == USB_INIT_HOST) {
-#ifdef CONFIG_USB_TCPC
-		ret = tcpc_disable_src_vbus(&port);
 #endif
 	}
 
@@ -462,23 +450,6 @@ set_status:
 			}
 		}
 	}
-}
-
-static int board_fix_19x19_evk(void *fdt)
-{
-	char cfgname[SCMI_MISC_MAX_CFGNAME];
-	u32 msel;
-	int ret;
-	const char *netcfg = "mx95netc";
-
-	ret = imx9_scmi_misc_cfginfo(&msel, cfgname);
-	if (!ret) {
-		debug("SM: %s\n", cfgname);
-		if (!strcmp(netcfg, cfgname))
-			disable_fdt_resources(fdt);
-	}
-
-	return 0;
 }
 
 int board_fix_fdt(void *fdt)

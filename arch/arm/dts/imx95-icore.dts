@@ -42,6 +42,15 @@
 		off-on-delay-us = <12000>;
 		enable-active-high;
 	};
+
+	reg_usb_vbus: regulator-vbus {
+		compatible = "regulator-fixed";
+		regulator-name = "USB_VBUS";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		enable-active-high;
+		regulator-always-on;
+	};
 };
 
 &flexspi1 {
@@ -125,6 +134,7 @@
 
 &usb2 {
 	dr_mode = "host";
+	vbus-supply = <&reg_usb_vbus>;
 	hnp-disable;
 	srp-disable;
 	adp-disable;
@@ -141,12 +151,10 @@
 };
 
 &usb3_dwc3 {
-	dr_mode = "otg";
+	dr_mode = "host";
 	hnp-disable;
 	srp-disable;
 	adp-disable;
-	usb-role-switch;
-	role-switch-default-mode = "none";
 	snps,dis-u1-entry-quirk;
 	snps,dis-u2-entry-quirk;
 	status = "okay";
