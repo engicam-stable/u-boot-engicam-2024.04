@@ -229,7 +229,7 @@
 };
 
 &usb_dwc3_0 {
-	dr_mode = "host";
+	dr_mode = "peripheral";
 	status = "okay";
 };
 
