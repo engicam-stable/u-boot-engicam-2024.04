@@ -208,7 +208,7 @@
 };
 
 &usb_dwc3_0 {
-	dr_mode = "host";
+	dr_mode = "peripheral";  /*changed from host for uuu*/
 	status = "okay";
 };
 
