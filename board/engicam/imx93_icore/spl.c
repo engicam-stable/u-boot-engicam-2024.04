@@ -32,7 +32,7 @@
 #include <asm/arch/ccm_regs.h>
 #include <asm/arch/ddr.h>
 #include <power/pmic.h>
-#include <power/pca9450.h>
+#include <power/pf9453.h>
 #include <asm/arch/trdc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -73,46 +73,51 @@ void spl_dram_init(void)
 	ddr_init(ptiming);
 }
 
-#if CONFIG_IS_ENABLED(DM_PMIC_PCA9450)
+#if CONFIG_IS_ENABLED(DM_PMIC_PF9453)
 int power_init_board(void)
 {
 	struct udevice *dev;
 	int ret;
+	unsigned int buck_val;
 
-	ret = pmic_get("pmic@25", &dev);
+	ret = pmic_get("pmic@32", &dev);
 	if (ret == -ENODEV) {
-		puts("No pca9450@25\n");
+		puts("No pf9453@32\n");
 		return 0;
 	}
 	if (ret != 0)
 		return ret;
 
-	/* BUCKxOUT_DVS0/1 control BUCK123 output */
-	pmic_reg_write(dev, PCA9450_BUCK123_DVS, 0x29);
-
 	/* enable DVS control through PMIC_STBY_REQ */
-	pmic_reg_write(dev, PCA9450_BUCK1CTRL, 0x59);
+	pmic_reg_write(dev, PF9453_BUCK2CTRL, 0x59);
 
-	if (is_voltage_mode(VOLT_LOW_DRIVE)){
-		/* 0.75v for Low drive mode
-		 */
-		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x0c);
-		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x0c);
+	if (is_voltage_mode(VOLT_LOW_DRIVE)) {
+		buck_val = 0x10; /* 0.8v for Low drive mode */
+		printf("PMIC: Low Drive Voltage Mode\n");
+	} else if (is_voltage_mode(VOLT_NOMINAL_DRIVE)) {
+		buck_val = 0x14; /* 0.85v for Nominal drive mode */
+		printf("PMIC: Nominal Voltage Mode\n");
 	} else {
-		/* 0.9v for Over drive mode
-		 */
-		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x18);
-		pmic_reg_write(dev, PCA9450_BUCK3OUT_DVS0, 0x18);
+		buck_val = 0x18; /* 0.9v for Over drive mode */
+		printf("PMIC: Over Drive Voltage Mode\n");
 	}
 
-	/* set standby voltage to 0.65v */
-	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x4);
+	pmic_reg_write(dev, PF9453_BUCK2OUT, buck_val);
 
-	/* I2C_LT_EN*/
-	pmic_reg_write(dev, 0xa, 0x3);
+	/* set standby voltage to 0.65v */
+	pmic_reg_write(dev, PF9453_BUCK2OUT_STBY, 0x4);
+
+	/* 1.1v for LPDDR4 */
+	pmic_reg_write(dev, PF9453_BUCK1OUT, 0x14);
+
+	ret = pmic_reg_read(dev, PF9453_CONFIG1);
+	if (ret < 0)
+		return ret;
+	/*The timer default is 8sec and too long, so change to 100ms.*/
+	pmic_reg_write(dev, PF9453_CONFIG1, ~PF9453_RESETKEY_TIMER_MASK & ret);
 
 	/* set WDOG_B_CFG to cold reset */
-	pmic_reg_write(dev, PCA9450_RESET_CTRL, 0xA1);
+	pmic_reg_write(dev, PF9453_RESET_CTRL, 0xA0);
 	return 0;
 }
 #endif
